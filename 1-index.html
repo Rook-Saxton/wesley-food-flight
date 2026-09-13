@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Wesley's Food Flight</title>
+<style>
+  :root{
+    --sky:#bfe3f7; --sky2:#e8f6ff; --leaf:#4caf50; --leaf-d:#3d8b40;
+    --sun:#ffc93c; --sun-d:#e0a800; --berry:#ef5350; --berry-d:#d32f2f;
+    --plum:#7e57c2; --plum-d:#5e35b1; --ink:#22303c; --card:#ffffff;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    font-family:'Comic Sans MS','Chalkboard SE','Segoe UI Rounded','Segoe UI',system-ui,sans-serif;
+    background:linear-gradient(180deg,var(--sky) 0%,var(--sky2) 60%,#d8f0d8 100%);
+    color:var(--ink); min-height:100%;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  .screen{width:100%; max-width:480px; padding:18px 16px 32px; display:none;}
+  .screen.active{display:block;}
+  h1{font-size:1.7rem; margin:8px 0 4px; text-align:center;}
+  h2{font-size:1.25rem; margin:6px 0;}
+  p.sub{text-align:center; margin:4px 0 18px; font-size:1rem; color:#3d5566;}
+  .bird{font-size:4.4rem; text-align:center; margin:10px 0 2px; animation:bob 2.2s ease-in-out infinite;}
+  @keyframes bob{0%,100%{transform:translateY(0) rotate(-3deg);}50%{transform:translateY(-10px) rotate(3deg);}}
+  .bubble{
+    background:#fff; border-radius:18px; padding:10px 16px; margin:6px auto 14px;
+    max-width:320px; text-align:center; font-size:1.05rem; box-shadow:0 3px 10px rgba(30,60,90,.15);
+    position:relative;
+  }
+  .bubble:after{content:''; position:absolute; top:-10px; left:50%; margin-left:-10px;
+    border:10px solid transparent; border-bottom-color:#fff; border-top:0;}
+  button{font-family:inherit; cursor:pointer; border:none;}
+  .big-btn{
+    display:block; width:100%; padding:18px 20px; margin:10px 0; font-size:1.35rem; font-weight:bold;
+    color:#fff; border-radius:18px; box-shadow:0 4px 0 rgba(0,0,0,.18);
+    transition:transform .06s;
+  }
+  .big-btn:active{transform:translateY(3px); box-shadow:0 1px 0 rgba(0,0,0,.18);}
+  .btn-love{background:var(--leaf);} .btn-love:active{background:var(--leaf-d);}
+  .btn-ok{background:var(--sun); color:#5a4300;} .btn-ok:active{background:var(--sun-d);}
+  .btn-no{background:var(--berry);} .btn-no:active{background:var(--berry-d);}
+  .btn-never{background:var(--plum); font-size:1.05rem; padding:14px 20px;} .btn-never:active{background:var(--plum-d);}
+  .btn-skip{background:#90a4ae; font-size:.95rem; padding:12px 20px; box-shadow:0 3px 0 rgba(0,0,0,.15);}
+  .btn-start{background:var(--leaf); font-size:1.5rem;}
+  .btn-plain{background:#607d8b; font-size:1rem; padding:12px 16px;}
+  .btn-add{background:#fff; color:var(--plum-d); border:2px dashed var(--plum);
+    box-shadow:none; font-size:1rem; padding:12px 16px;}
+  .food-card{
+    background:var(--card); border-radius:24px; padding:26px 18px 22px; margin:8px 0 16px;
+    text-align:center; box-shadow:0 6px 18px rgba(30,60,90,.18);
+  }
+  .food-emoji{font-size:4.6rem; line-height:1.1;}
+  .food-name{font-size:1.7rem; font-weight:bold; margin-top:8px;}
+  .progress-wrap{background:rgba(255,255,255,.6); border-radius:12px; height:22px; margin:6px 0 4px; overflow:hidden;}
+  .progress-bar{height:100%; background:var(--sun); width:0%; transition:width .25s; border-radius:12px;}
+  .progress-text{text-align:center; font-size:.95rem; color:#3d5566; margin-bottom:10px;}
+  .reaction{min-height:2rem; text-align:center; font-size:1.15rem; font-weight:bold; margin:2px 0 6px; color:var(--plum-d);}
+  .add-form{background:#fff; border-radius:18px; padding:14px; margin:12px 0; box-shadow:0 3px 10px rgba(30,60,90,.12); display:none;}
+  .add-form.open{display:block;}
+  .add-form input[type=text]{
+    width:100%; font-family:inherit; font-size:1.1rem; padding:12px 14px; margin:6px 0;
+    border:2px solid #b0bec5; border-radius:12px;
+  }
+  .add-form .row{display:flex; gap:8px;}
+  .add-form .row .big-btn{margin:4px 0; padding:12px; font-size:1rem;}
+  .add-form .emoji-opts{display:flex; flex-wrap:wrap; gap:6px; margin:4px 0 8px;}
+  .add-form .emoji-opts button{font-size:1.5rem; background:#eceff1; border-radius:10px; padding:6px 9px;}
+  .add-form .emoji-opts button.sel{background:var(--sun);}
+  .summary-card{background:var(--card); border-radius:24px; padding:20px 18px; margin:10px 0 14px; box-shadow:0 6px 18px rgba(30,60,90,.18);}
+  .summary-card h2{margin-top:14px;}
+  .summary-card ul{margin:6px 0 10px; padding-left:22px; font-size:1.08rem; line-height:1.55;}
+  .summary-date{text-align:center; font-size:1.05rem; color:#3d5566; margin:2px 0 10px;}
+  .hint{font-size:.95rem; color:#3d5566; text-align:center; margin:14px 0 4px;}
+  .footer-note{font-size:.85rem; color:#5b7484; text-align:center; margin-top:18px;}
+  @media print{
+    body{background:#fff;}
+    .no-print{display:none !important;}
+    .summary-card{box-shadow:none; border:1px solid #ccc;}
+  }
+</style>
+</head>
+<body>
+
+<!-- START SCREEN -->
+<div class="screen active" id="screen-start">
+  <div class="bird">🐦</div>
+  <h1>Wesley's Food Flight</h1>
+  <p class="sub">Help the bird find out which foods are yummy, which are okay, and which are a big NO.</p>
+  <div class="bubble">Tap a button for every food. There are no wrong answers!</div>
+  <button class="big-btn btn-start" id="btn-start">Start flying! 🚀</button>
+  <button class="big-btn btn-plain" id="btn-resume" style="display:none;">Continue where I left off ▶️</button>
+  <button class="big-btn btn-add" id="btn-add-start">+ Add my own food</button>
+  <div class="add-form" id="add-form-start">
+    <h2>Add a food</h2>
+    <input type="text" id="custom-name-start" maxlength="40" placeholder="Food name (e.g. pizza rolls)">
+    <div class="emoji-opts" id="emoji-opts-start"></div>
+    <div class="row">
+      <button class="big-btn btn-love" id="custom-save-start">Add it ✅</button>
+      <button class="big-btn btn-plain" id="custom-cancel-start">Cancel</button>
+    </div>
+  </div>
+  <p class="footer-note">Works offline. No accounts. Nothing leaves this device except what you screenshot or copy.</p>
+</div>
+
+<!-- GAME SCREEN -->
+<div class="screen" id="screen-game">
+  <div class="progress-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+  <div class="progress-text" id="progress-text">Food 1 of 10</div>
+  <div class="food-card">
+    <div class="food-emoji" id="food-emoji">🍕</div>
+    <div class="food-name" id="food-name">Pizza</div>
+  </div>
+  <div class="reaction" id="reaction">&nbsp;</div>
+  <button class="big-btn btn-love" data-verdict="love">❤️ Love it!</button>
+  <button class="big-btn btn-ok" data-verdict="ok">👌 It's okay</button>
+  <button class="big-btn btn-no" data-verdict="no">🚫 No way!</button>
+  <button class="big-btn btn-never" data-verdict="never">🤷 Never tried it</button>
+  <button class="big-btn btn-skip" id="btn-skip">Skip this one ⏭️</button>
+  <button class="big-btn btn-add" id="btn-add-game">+ Add my own food</button>
+  <div class="add-form" id="add-form-game">
+    <h2>Add a food</h2>
+    <input type="text" id="custom-name-game" maxlength="40" placeholder="Food name">
+    <div class="emoji-opts" id="emoji-opts-game"></div>
+    <div class="row">
+      <button class="big-btn btn-love" id="custom-save-game">Add it ✅</button>
+      <button class="big-btn btn-plain" id="custom-cancel-game">Cancel</button>
+    </div>
+  </div>
+  <button class="big-btn btn-plain no-print" id="btn-finish-early" style="font-size:.9rem;">Finish &amp; see my results 🏁</button>
+</div>
+
+<!-- SUMMARY SCREEN -->
+<div class="screen" id="screen-summary">
+  <div class="bird">🎉</div>
+  <h1>Great flying, Wesley!</h1>
+  <div class="summary-date" id="summary-date"></div>
+  <div class="summary-card" id="summary-body"></div>
+  <div class="no-print">
+    <button class="big-btn btn-start" id="btn-copy">📋 Copy results</button>
+    <p class="hint">Grown-ups: screenshot this page or use Copy results to save Wesley's answers with today's date.</p>
+    <button class="big-btn btn-plain" id="btn-again">Play again 🔁</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var FOODS = [
+    // Wesley's known foods (from mom)
+    {name:"Chicken dinosaurs (Tyson)", emoji:"🦖"},
+    {name:"Bananas", emoji:"🍌"},
+    {name:"Pop-Tarts", emoji:"🍓"},
+    // Common kid foods
+    {name:"Chicken nuggets", emoji:"🍗"},
+    {name:"Chicken tenders", emoji:"🍟"},
+    {name:"Pizza", emoji:"🍕"},
+    {name:"Mac and cheese", emoji:"🧀"},
+    {name:"Buttered noodles", emoji:"🍝"},
+    {name:"Spaghetti with sauce", emoji:"🍝"},
+    {name:"Hot dog", emoji:"🌭"},
+    {name:"Corn dog", emoji:"🌽"},
+    {name:"Hamburger", emoji:"🍔"},
+    {name:"Cheeseburger", emoji:"🍔"},
+    {name:"French fries", emoji:"🍟"},
+    {name:"Tater tots", emoji:"🥔"},
+    {name:"Mashed potatoes", emoji:"🥔"},
+    {name:"Bread", emoji:"🍞"},
+    {name:"Toast", emoji:"🍞"},
+    {name:"Bagel", emoji:"🥯"},
+    {name:"Milk", emoji:"🥛"},
+    {name:"Chocolate milk", emoji:"🍫"},
+    {name:"Apple", emoji:"🍎"},
+    {name:"Applesauce", emoji:"🍎"},
+    {name:"Grapes", emoji:"🍇"},
+    {name:"Strawberries", emoji:"🍓"},
+    {name:"Blueberries", emoji:"🫐"},
+    {name:"Watermelon", emoji:"🍉"},
+    {name:"Orange slices", emoji:"🍊"},
+    {name:"Raisins", emoji:"🍇"},
+    {name:"Carrots", emoji:"🥕"},
+    {name:"Broccoli", emoji:"🥦"},
+    {name:"Corn", emoji:"🌽"},
+    {name:"Green beans", emoji:"🫛"},
+    {name:"Peas", emoji:"🫛"},
+    {name:"Pickles", emoji:"🥒"},
+    {name:"Cheese", emoji:"🧀"},
+    {name:"String cheese", emoji:"🧀"},
+    {name:"Yogurt", emoji:"🍦"},
+    {name:"Grilled cheese sandwich", emoji:"🥪"},
+    {name:"Peanut butter & jelly sandwich", emoji:"🥪"},
+    {name:"Quesadilla", emoji:"🫓"},
+    {name:"Tacos", emoji:"🌮"},
+    {name:"Rice", emoji:"🍚"},
+    {name:"Pancakes", emoji:"🥞"},
+    {name:"Waffles", emoji:"🧇"},
+    {name:"Cereal", emoji:"🥣"},
+    {name:"Oatmeal", emoji:"🥣"},
+    {name:"Scrambled eggs", emoji:"🍳"},
+    {name:"Boiled eggs", emoji:"🥚"},
+    {name:"Bacon", emoji:"🥓"},
+    {name:"Sausage", emoji:"🌭"},
+    {name:"Fish sticks", emoji:"🐟"},
+    {name:"Goldfish crackers", emoji:"🐠"},
+    {name:"Pretzels", emoji:"🥨"},
+    {name:"Chips", emoji:"🍟"},
+    {name:"Popcorn", emoji:"🍿"},
+    {name:"Crackers", emoji:"🍘"},
+    {name:"Fruit snacks", emoji:"🍬"},
+    {name:"Ice cream", emoji:"🍨"},
+    {name:"Cookies", emoji:"🍪"},
+    {name:"Donut", emoji:"🍩"},
+    {name:"Muffin", emoji:"🧁"},
+    {name:"Cupcake", emoji:"🧁"},
+    {name:"Pudding", emoji:"🍮"},
+    {name:"Jell-O", emoji:"🍮"},
+    {name:"Ketchup", emoji:"🍅"},
+    {name:"Ranch dressing", emoji:"🥗"},
+    {name:"Peanut butter", emoji:"🥜"},
+    {name:"Nutella", emoji:"🍫"},
+    {name:"Smoothie", emoji:"🥤"},
+    {name:"Hot chocolate", emoji:"☕"}
+  ];
+  var EMOJI_CHOICES = ["🍽️","🍕","🍔","🌮","🍗","🥪","🍎","🍌","🍇","🍓","🥕","🧀","🥞","🍪","🍩","🥤"];
+  var REACTIONS = {
+    love:["Tweet tweet! 🎵","Yum yum!","The bird approves! 🐦","Happy dance! 💃"],
+    ok:["Okay, noted!","A little nibble!","The bird shrugs 🪶"],
+    no:["Sqwwwawk! 🙀","The bird flew away!","Nope, noted!"],
+    never:["Maybe someday!","Into the logbook! 🪶","A mystery food!"],
+    skip:["Flying past!","Zoom! Next one!"]
+  };
+
+  var state = {verdicts:{}, custom:[], order:null, idx:0};
+  var STORE_KEY = "wesleys-food-flight-v1";
+
+  function $(id){return document.getElementById(id);}
+  function show(id){
+    var screens = document.querySelectorAll(".screen");
+    for(var i=0;i<screens.length;i++){screens[i].classList.remove("active");}
+    $(id).classList.add("active");
+    window.scrollTo(0,0);
+  }
+  function save(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){} }
+  function load(){
+    try{
+      var raw = localStorage.getItem(STORE_KEY);
+      if(!raw) return false;
+      var s = JSON.parse(raw);
+      if(s && s.verdicts){ state = s; return true; }
+    }catch(e){}
+    return false;
+  }
+  function allFoods(){
+    var base = FOODS.slice();
+    for(var i=0;i<state.custom.length;i++){ base.push(state.custom[i]); }
+    return base;
+  }
+  function foodByName(name){
+    var f = allFoods();
+    for(var i=0;i<f.length;i++){ if(f[i].name===name) return f[i]; }
+    return {name:name, emoji:"🍽️"};
+  }
+  function buildOrder(){
+    // Wesley's three known foods first (quick wins), then the rest shuffled, custom foods at the end.
+    var known = [FOODS[0].name, FOODS[1].name, FOODS[2].name];
+    var rest = [];
+    for(var i=3;i<FOODS.length;i++){ rest.push(FOODS[i].name); }
+    for(var j=rest.length-1;j>0;j--){
+      var k = Math.floor(Math.random()*(j+1));
+      var t = rest[j]; rest[j]=rest[k]; rest[k]=t;
+    }
+    var cust = [];
+    for(var c=0;c<state.custom.length;c++){ cust.push(state.custom[c].name); }
+    return known.concat(rest).concat(cust);
+  }
+  function startGame(resume){
+    if(!state.order || !resume){ state.order = buildOrder(); state.idx = 0; }
+    if(state.idx >= state.order.length){ state.idx = 0; state.verdicts = {}; }
+    save();
+    show("screen-game");
+    renderFood();
+  }
+  function renderFood(){
+    var total = state.order.length;
+    if(state.idx >= total){ showSummary(); return; }
+    var food = foodByName(state.order[state.idx]);
+    $("food-emoji").textContent = food.emoji;
+    $("food-name").textContent = food.name;
+    $("progress-text").textContent = "Food " + (state.idx+1) + " of " + total;
+    $("progress-bar").style.width = Math.round((state.idx/total)*100) + "%";
+    $("reaction").innerHTML = "&nbsp;";
+  }
+  function react(kind){
+    var opts = REACTIONS[kind] || REACTIONS.skip;
+    $("reaction").textContent = opts[Math.floor(Math.random()*opts.length)];
+  }
+  function answer(verdict){
+    var name = state.order[state.idx];
+    state.verdicts[name] = verdict;
+    state.idx++;
+    save();
+    react(verdict);
+    setTimeout(renderFood, 420);
+  }
+  function skipFood(){
+    state.idx++;
+    save();
+    react("skip");
+    setTimeout(renderFood, 300);
+  }
+  function addCustom(name, emoji){
+    name = (name||"").trim();
+    if(!name) return false;
+    for(var i=0;i<state.custom.length;i++){
+      if(state.custom[i].name.toLowerCase()===name.toLowerCase()) return false;
+    }
+    state.custom.push({name:name, emoji:emoji||"🍽️"});
+    if(state.order){ state.order.push(name); }
+    save();
+    return true;
+  }
+  function verdictLabel(v){
+    return v==="love"?"❤️ Loves it":v==="ok"?"👌 Okay":v==="no"?"🚫 No way":v==="never"?"🤷 Never tried":"⏭️ Skipped";
+  }
+  function summaryData(){
+    var groups = {love:[], ok:[], no:[], never:[], skipped:[]};
+    for(var i=0;i<state.order.length;i++){
+      var name = state.order[i];
+      var v = state.verdicts[name];
+      if(!v){ groups.skipped.push(name); }
+      else{ groups[v].push(name); }
+    }
+    return groups;
+  }
+  function todayString(){
+    var d = new Date();
+    var days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+    var months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    return days[d.getDay()] + ", " + months[d.getMonth()] + " " + d.getDate() + ", " + d.getFullYear();
+  }
+  function showSummary(){
+    show("screen-summary");
+    var g = summaryData();
+    $("summary-date").textContent = "Recorded on " + todayString();
+    var html = "";
+    var sections = [
+      ["love","❤️ Loves it"],
+      ["ok","👌 It's okay"],
+      ["no","🚫 No way"],
+      ["never","🤷 Never tried"],
+      ["skipped","⏭️ Skipped / not asked"]
+    ];
+    for(var s=0;s<sections.length;s++){
+      var key = sections[s][0], label = sections[s][1];
+      if(g[key].length===0 && key==="skipped") continue;
+      html += "<h2>" + label + " (" + g[key].length + ")</h2><ul>";
+      for(var i=0;i<g[key].length;i++){
+        var f = foodByName(g[key][i]);
+        html += "<li>" + f.emoji + " " + f.name + "</li>";
+      }
+      if(g[key].length===0){ html += "<li>(none)</li>"; }
+      html += "</ul>";
+    }
+    $("summary-body").innerHTML = html;
+  }
+  function copyResults(){
+    var g = summaryData();
+    var lines = ["Wesley's Food Flight - " + todayString(), ""];
+    var sections = [["love","LOVES IT"],["ok","OKAY"],["no","NO WAY"],["never","NEVER TRIED"],["skipped","SKIPPED"]];
+    for(var s=0;s<sections.length;s++){
+      var key=sections[s][0], label=sections[s][1];
+      lines.push(label + " (" + g[key].length + "): " + (g[key].length? g[key].join(", ") : "none"));
+    }
+    var text = lines.join("\n");
+    function done(ok){
+      $("btn-copy").textContent = ok ? "✅ Copied!" : "Copy didn't work - screenshot instead";
+      setTimeout(function(){ $("btn-copy").textContent = "📋 Copy results"; }, 1800);
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){done(true);}, function(){fallback();});
+    } else { fallback(); }
+    function fallback(){
+      try{
+        var ta = document.createElement("textarea");
+        ta.value = text; document.body.appendChild(ta);
+        ta.select(); document.execCommand("copy");
+        document.body.removeChild(ta); done(true);
+      }catch(e){ done(false); }
+    }
+  }
+  function resetGame(){
+    state = {verdicts:{}, custom:state.custom.slice(), order:null, idx:0};
+    save();
+    show("screen-start");
+    checkResume();
+  }
+  function checkResume(){
+    var has = state.order && state.idx > 0 && state.idx < state.order.length;
+    $("btn-resume").style.display = has ? "block" : "none";
+  }
+  function wireAddForm(suffix){
+    var opts = $("emoji-opts-"+suffix);
+    var selected = "🍽️";
+    opts.innerHTML = "";
+    EMOJI_CHOICES.forEach(function(e){
+      var b = document.createElement("button");
+      b.type = "button"; b.textContent = e;
+      if(e===selected){ b.classList.add("sel"); }
+      b.onclick = function(){
+        selected = e;
+        var kids = opts.children;
+        for(var i=0;i<kids.length;i++){ kids[i].classList.remove("sel"); }
+        b.classList.add("sel");
+      };
+      opts.appendChild(b);
+    });
+    $("btn-add-"+suffix).onclick = function(){ $("add-form-"+suffix).classList.toggle("open"); };
+    $("custom-cancel-"+suffix).onclick = function(){ $("add-form-"+suffix).classList.remove("open"); };
+    $("custom-save-"+suffix).onclick = function(){
+      var input = $("custom-name-"+suffix);
+      var ok = addCustom(input.value, selected);
+      if(ok){
+        input.value = "";
+        $("add-form-"+suffix).classList.remove("open");
+        if($("screen-game").classList.contains("active")){
+          $("reaction").textContent = "Added! It will show up soon 🐦";
+        }
+      } else {
+        input.placeholder = "Type a food name first!";
+        input.value = "";
+      }
+    };
+  }
+
+  $("btn-start").onclick = function(){ startGame(false); };
+  $("btn-resume").onclick = function(){ startGame(true); };
+  $("btn-skip").onclick = skipFood;
+  $("btn-finish-early").onclick = function(){ showSummary(); };
+  $("btn-copy").onclick = copyResults;
+  $("btn-again").onclick = resetGame;
+  var vbtns = document.querySelectorAll("[data-verdict]");
+  for(var i=0;i<vbtns.length;i++){
+    vbtns[i].onclick = function(){ answer(this.getAttribute("data-verdict")); };
+  }
+  wireAddForm("start");
+  wireAddForm("game");
+
+  load();
+  checkResume();
+
+  // Debug/test hooks: #game jumps into the game, #summary fills a sample and shows results.
+  if(location.hash === "#game"){ startGame(false); }
+  if(location.hash === "#summary"){
+    state.order = buildOrder();
+    for(var j=0;j<state.order.length;j++){
+      var n = state.order[j];
+      state.verdicts[n] = j%4===0 ? "love" : j%4===1 ? "ok" : j%4===2 ? "no" : "never";
+    }
+    state.idx = state.order.length;
+    showSummary();
+  }
+})();
+</script>
+</body>
+</html>
